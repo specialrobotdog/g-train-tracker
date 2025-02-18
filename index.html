@@ -19,31 +19,35 @@
     <button onclick="fetchTrainData()">Refresh Data</button>
     <pre id="train-data">Loading...</pre>
 
-    <script>
-        async function fetchTrainData() {
-            const url = "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-g";
+   <script>
+    async function fetchTrainData() {
+        const url = "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-g";
 
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error("Network response was not ok.");
-                }
-
-                const buffer = await response.arrayBuffer();
-
-                // Load GTFS-RT Schema
-                const root = await protobuf.load("https://raw.githubusercontent.com/google/transit/master/gtfs-realtime/proto/gtfs-realtime.proto");
-                const FeedMessage = root.lookupType("transit_realtime.FeedMessage");
-                const message = FeedMessage.decode(new Uint8Array(buffer));
-
-                document.getElementById('train-data').innerText = JSON.stringify(message, null, 2);
-
-            } catch (error) {
-                document.getElementById('train-data').innerText = "Error fetching data: " + error.message;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`MTA API error: ${response.status}`);
             }
-        }
 
-        fetchTrainData();
-    </script>
+            const buffer = await response.arrayBuffer();
+
+            // Load the GTFS-RT schema
+            const root = await protobuf.load("https://raw.githubusercontent.com/google/transit/master/gtfs-realtime/proto/gtfs-realtime.proto");
+
+            // Decode the protobuf data
+            const FeedMessage = root.lookupType("transit_realtime.FeedMessage");
+            const message = FeedMessage.decode(new Uint8Array(buffer));
+
+            // Convert the decoded message to JSON and display it
+            document.getElementById('train-data').innerText = JSON.stringify(message, null, 2);
+
+        } catch (error) {
+            document.getElementById('train-data').innerText = "Error fetching data: " + error.message;
+        }
+    }
+
+    fetchTrainData();
+</script>
+
 </body>
 </html>
